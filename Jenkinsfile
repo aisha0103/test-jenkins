@@ -1,17 +1,33 @@
-node {
-    stage "Create build output"
-    
-    // Make the output directory.
-    sh "mkdir -p output"
-
-    // Write an useful file, which is needed to be archived.
-    writeFile file: "output/usefulfile.txt", text: "This file is useful, need to archive it."
-
-    // Write an useless file, which is not needed to be archived.
-    writeFile file: "output/uselessfile.md", text: "This file is useless, no need to archive it."
-
-    stage "Archive build output"
-    
-    // Archive the build output artifacts.
-    archiveArtifacts artifacts: 'output/*.txt', excludes: 'output/*.md'
+pipeline {
+    agent {
+        label 'master'
+    }
+    parameters {
+        string(name: 'text',              defaultValue: 'Some Text',  description: 'Text')
+        string(name: 'foreground_color',  defaultValue: 'black',      description: 'Foreground')
+        string(name: 'background_color',  defaultValue: 'lightgreen', description: 'Background')
+        string(name: 'border_size',       defaultValue: '5px',        description: 'Border size')
+        string(name: 'border_color',      defaultValue: 'yellow',     description: 'Border color')
+    }
+ 
+    stages {
+        stage('Check disk usage') {
+            steps {
+                script {
+                    manager.addShortText(
+                        params.text,
+                        params.foreground_color,
+                        params.background_color,
+                        params.border_size,
+                        params.border_color
+                    )
+                    currentBuild.description = "Foreground: ${foreground_color}<br>"
+                    currentBuild.description += "Background: ${background_color}<br>"
+                    currentBuild.description += "Border size: ${params.border_size}<br>"
+                    currentBuild.description += "Border color: ${params.border_color}"
+ 
+                }
+            }
+        }
+    }
 }
