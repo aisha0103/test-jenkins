@@ -1,33 +1,25 @@
-pipeline {
-    agent {
-        label 'master'
+node {
+    def mvnHome
+    stage('Preparation') { // for display purposes
+        // Get some code from a GitHub repository
+        git 'https://github.com/jglick/simple-maven-project-with-tests.git'
+        // Get the Maven tool.
+        // ** NOTE: This 'M3' Maven tool must be configured
+        // **       in the global configuration.
+        mvnHome = tool 'M3'
     }
-    parameters {
-        string(name: 'text',              defaultValue: 'Some Text',  description: 'Text')
-        string(name: 'foreground_color',  defaultValue: 'black',      description: 'Foreground')
-        string(name: 'background_color',  defaultValue: 'lightgreen', description: 'Background')
-        string(name: 'border_size',       defaultValue: '5px',        description: 'Border size')
-        string(name: 'border_color',      defaultValue: 'yellow',     description: 'Border color')
-    }
- 
-    stages {
-        stage('Check disk usage') {
-            steps {
-                script {
-                    manager.addShortText(
-                        params.text,
-                        params.foreground_color,
-                        params.background_color,
-                        params.border_size,
-                        params.border_color
-                    )
-                    currentBuild.description = "Foreground: ${foreground_color}<br>"
-                    currentBuild.description += "Background: ${background_color}<br>"
-                    currentBuild.description += "Border size: ${params.border_size}<br>"
-                    currentBuild.description += "Border color: ${params.border_color}"
- 
-                }
+    stage('Build') {
+        // Run the maven build
+        withEnv(["MVN_HOME=$mvnHome"]) {
+            if (isUnix()) {
+                sh '"$MVN_HOME/bin/mvn" -Dmaven.test.failure.ignore clean package'
+            } else {
+                bat(/"%MVN_HOME%\bin\mvn" -Dmaven.test.failure.ignore clean package/)
             }
         }
+    }
+    stage('Results') {
+        junit '**/target/surefire-reports/TEST-*.xml'
+        archiveArtifacts 'target/*.jar'
     }
 }
