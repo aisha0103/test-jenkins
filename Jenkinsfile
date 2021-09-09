@@ -9,9 +9,9 @@ node {
         
     }
     stage('Build') {
-      sh 'echo hi'
+      bat 'echo hi'
     }
     stage('Results') {
-        sh 'echo result'
+        bat 'echo result'
     }
 }
